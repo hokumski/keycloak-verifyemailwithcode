@@ -211,8 +211,15 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
         requiredActionContext.getHttpRequest().getDecodedFormParameters();
     String emailCode = formData.getFirst("code");
 
-    if (!code.equals(emailCode)) {
+    if (emailCode == null) {
+      requiredActionContext.getAuthenticationSession().removeAuthNote(Constants.VERIFY_EMAIL_KEY);
+      requiredActionContext.getAuthenticationSession().removeAuthNote(Constants.VERIFY_EMAIL_CODE);
+      requiredActionContext.form().setInfo("newCodeSent");
+      requiredActionChallenge(requiredActionContext);
+      return;
+    }
 
+    if (!code.equals(emailCode)) {
       LoginFormsProvider loginFormsProvider = requiredActionContext.form();
       loginFormsProvider.setError("invalidCode");
       Response challenge = loginFormsProvider.createForm("login-verify-email-code.ftl");
