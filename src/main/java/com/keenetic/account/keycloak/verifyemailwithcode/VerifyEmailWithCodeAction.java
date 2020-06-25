@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.*;
 
 /** @author <a href="mailto:hokum@dived.me">Andrey Kotov</a> */
@@ -77,6 +76,7 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
       }
       case "upper": {
         codeSource = RandomString.upper;
+        break;
       }
       case "digits": {
         codeSource = RandomString.digits;
