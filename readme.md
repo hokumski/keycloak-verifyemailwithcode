@@ -21,7 +21,7 @@ Code format can be configured with standalone.xml:
 
 ### Settings
 
-You must also disable "Profile Validation" execution in your Registration flow.
-Add new action: Authentication > Required actions, click "Register" button and select "New Email with Code". 
+**IMPORTANT**: You must also disable "Profile Validation" execution in your Registration flow.
+Add new action: Authentication > Required actions, click "Register" button and select "Verify Email with Code". 
 Then, disable default "Verify email" required action, and enable new "Verify Email with Code".
    

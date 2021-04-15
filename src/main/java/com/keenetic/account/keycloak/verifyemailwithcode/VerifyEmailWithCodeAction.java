@@ -44,6 +44,7 @@ import javax.ws.rs.core.*;
 /** @author <a href="mailto:hokum@dived.me">Andrey Kotov</a> */
 public class VerifyEmailWithCodeAction implements RequiredActionProvider {
 
+  // References:
   // https://github.com/keycloak/keycloak/blob/master/services/src/main/java/org/keycloak/authentication/requiredactions/VerifyEmail.java
   // https://github.com/keycloak/keycloak/blob/master/services/src/main/java/org/keycloak/authentication/requiredactions/ConsoleVerifyEmail.java
 
