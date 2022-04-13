@@ -6,7 +6,7 @@
         <form id="kc-totp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcLabelWrapperClass!}">
-                    <label for="code" class="${properties.kcLabelClass!}">${msg("enterCodeFromEmail")}</label>
+                    <label for="code" class="${properties.kcLabelClass!}">${msg("enterCodeFromEmail")} ${email!''}</label>
                 </div>
                 <div class="${properties.kcInputWrapperClass!}">
                     <input id="code" name="code" type="text" class="${properties.kcInputClass!}" />

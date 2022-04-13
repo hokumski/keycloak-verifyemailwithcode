@@ -133,7 +133,9 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
               requiredActionContext.getAuthenticationSession(),
               event);
     } else {
-      challenge = loginFormsProvider.createForm("login-verify-email-code.ftl");
+      challenge = loginFormsProvider
+              .setAttribute("email", requiredActionContext.getUser().getEmail())
+              .createForm("login-verify-email-code.ftl");
     }
 
     requiredActionContext.challenge(challenge);
@@ -195,7 +197,9 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
       event.error(Errors.EMAIL_SEND_FAILED);
     }
 
-    return forms.createForm("login-verify-email-code.ftl");
+    return forms
+            .setAttribute("email", user.getEmail())
+            .createForm("login-verify-email-code.ftl");
   }
 
   @Override
@@ -223,7 +227,9 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
     if (!code.equals(emailCode)) {
       LoginFormsProvider loginFormsProvider = requiredActionContext.form();
       loginFormsProvider.setError("invalidCode");
-      Response challenge = loginFormsProvider.createForm("login-verify-email-code.ftl");
+      Response challenge = loginFormsProvider
+              .setAttribute("email", requiredActionContext.getUser().getEmail())
+              .createForm("login-verify-email-code.ftl");
       requiredActionContext.challenge(challenge);
       return;
     }
