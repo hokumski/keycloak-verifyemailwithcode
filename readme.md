@@ -16,6 +16,11 @@ Code format can be configured with standalone.xml:
 </spi>
 ``` 
 
+or in keycloak.conf:
+```yaml
+spi-required-action-VERIFY_EMAIL_WITH_CODE-code_format=digits-6
+```
+
 ##### Available formats:
 - digits-N
 

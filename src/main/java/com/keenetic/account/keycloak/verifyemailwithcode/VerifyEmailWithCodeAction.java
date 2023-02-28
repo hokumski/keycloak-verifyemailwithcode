@@ -18,9 +18,10 @@
 package com.keenetic.account.keycloak.verifyemailwithcode;
 
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.authentication.*;
 import org.keycloak.authentication.actiontoken.verifyemail.VerifyEmailActionToken;
-import org.keycloak.common.util.RandomString;
+import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.common.util.Time;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailTemplateProvider;
@@ -38,7 +39,6 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.security.SecureRandom;
 import javax.ws.rs.core.*;
 
 /** @author <a href="mailto:hokum@dived.me">Andrey Kotov</a> */
@@ -69,25 +69,25 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
         throw new IllegalArgumentException();
       }
     }
-    String codeSource;
+    char[] codeSource;
     switch (parts[0]) {
       case "lower": {
-        codeSource = RandomString.lower;
+        codeSource = "abcdefghijklmnopqrstuvwxyz".toCharArray();
         break;
       }
       case "upper": {
-        codeSource = RandomString.upper;
+        codeSource = SecretGenerator.UPPER;
         break;
       }
       case "digits": {
-        codeSource = RandomString.digits;
+        codeSource = SecretGenerator.DIGITS;
         break;
       }
       default: {
-        codeSource = RandomString.alphanum;
+        codeSource = SecretGenerator.ALPHANUM;
       }
     }
-    return new RandomString(codeLength, new SecureRandom(), codeSource).nextString();
+    return SecretGenerator.getInstance().randomString(codeLength, codeSource);
   }
 
   @Override
@@ -148,24 +148,21 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
       AuthenticationSessionModel authSession,
       EventBuilder event)
       throws UriBuilderException, IllegalArgumentException {
+
     RealmModel realm = session.getContext().getRealm();
     UriInfo uriInfo = session.getContext().getUri();
 
-    int validityInSecs =
-        realm.getActionTokenGeneratedByUserLifespan(VerifyEmailActionToken.TOKEN_TYPE);
+    int validityInSecs = realm.getActionTokenGeneratedByUserLifespan(VerifyEmailActionToken.TOKEN_TYPE);
     int absoluteExpirationInSecs = Time.currentTime() + validityInSecs;
 
-    String authSessionEncodedId =
-        AuthenticationSessionCompoundId.fromAuthSession(authSession).getEncodedId();
-    VerifyEmailActionToken token =
-        new VerifyEmailActionToken(
+    String authSessionEncodedId = AuthenticationSessionCompoundId.fromAuthSession(authSession).getEncodedId();
+    VerifyEmailActionToken token = new VerifyEmailActionToken(
             user.getId(),
             absoluteExpirationInSecs,
             authSessionEncodedId,
             user.getEmail(),
             authSession.getClient().getClientId());
-    UriBuilder builder =
-        Urls.actionTokenBuilder(
+    UriBuilder builder = Urls.actionTokenBuilder(
             uriInfo.getBaseUri(),
             token.serialize(session, realm, uriInfo),
             authSession.getClient().getClientId(),
@@ -174,6 +171,7 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
     // long expirationInMinutes = TimeUnit.SECONDS.toMinutes(validityInSecs);
 
     String code = generateCode(this.codeFormat);
+
     authSession.setAuthNote(Constants.VERIFY_EMAIL_CODE, code);
 
     Map<String, Object> attributes = new HashMap<>();
@@ -197,24 +195,29 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
       event.error(Errors.EMAIL_SEND_FAILED);
     }
 
-    return forms
-            .setAttribute("email", user.getEmail())
-            .createForm("login-verify-email-code.ftl");
+    return forms.setAttribute("email", user.getEmail()).createForm("login-verify-email-code.ftl");
   }
 
   @Override
   public void processAction(RequiredActionContext requiredActionContext) {
 
-    String code =
-        requiredActionContext.getAuthenticationSession().getAuthNote(Constants.VERIFY_EMAIL_CODE);
+    String code = requiredActionContext.getAuthenticationSession().getAuthNote(Constants.VERIFY_EMAIL_CODE);
     if (code == null) {
       requiredActionChallenge(requiredActionContext);
       return;
     }
 
-    MultivaluedMap<String, String> formData =
-        requiredActionContext.getHttpRequest().getDecodedFormParameters();
-    String emailCode = formData.getFirst("code");
+    // Issue with jboss/resteasy: when our user clicks on "Click here to re-send the e-mail", flow reaches
+    // getDecodedFormParameters, and in BaseHttpRequest.getFormParameters() MediaType mt will be null.
+    // To avoid calling null in next line, we do not call getDecodedFormParameters function
+    // if we know for sure it will cause exception.
+    String emailCode = null;
+    HttpRequest hr = requiredActionContext.getHttpRequest();
+    String contentTypeHeader = hr.getHttpHeaders().getHeaderString("content-type");
+    if (contentTypeHeader != null) {
+      MultivaluedMap<String, String> formData = hr.getDecodedFormParameters();
+      emailCode = formData.getFirst("code");
+    }
 
     if (emailCode == null) {
       requiredActionContext.getAuthenticationSession().removeAuthNote(Constants.VERIFY_EMAIL_KEY);
