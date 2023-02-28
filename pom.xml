@@ -15,7 +15,7 @@
 
         <!-- Dependencies -->
         <jboss.logging.version>3.3.1.Final</jboss.logging.version>
-        <keycloak.version>18.0.2</keycloak.version>
+        <keycloak.version>20.0.3</keycloak.version>
     </properties>
 
     <dependencies>
