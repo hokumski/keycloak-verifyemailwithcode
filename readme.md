@@ -5,24 +5,16 @@ This module copies "Verify Email" behaviour, but adds another option to verify w
 ## Setup 
 Update your theme with values from theme_directory files
 
-Code format can be configured with standalone.xml:
-```xml
-<spi name="required-action">
-    <provider name="VERIFY_EMAIL_WITH_CODE" enabled="true">
-        <properties>
-            <property name="code_format" value="digits-6"/>
-        </properties>
-    </provider>
-</spi>
-``` 
-
-or in keycloak.conf:
+Code format can be configured in keycloak.conf:
 ```yaml
 spi-required-action-VERIFY_EMAIL_WITH_CODE-code_format=digits-6
 ```
 
 ##### Available formats:
 - digits-N
+- lower-N
+- upper-N
+- alphanum-N
 
 ### Settings
 

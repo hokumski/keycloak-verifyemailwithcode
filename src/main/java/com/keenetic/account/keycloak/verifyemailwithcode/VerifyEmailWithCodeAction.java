@@ -18,7 +18,6 @@
 package com.keenetic.account.keycloak.verifyemailwithcode;
 
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.authentication.*;
 import org.keycloak.authentication.actiontoken.verifyemail.VerifyEmailActionToken;
 import org.keycloak.common.util.SecretGenerator;
@@ -30,6 +29,7 @@ import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.models.*;
 import org.keycloak.services.Urls;
 import org.keycloak.services.validation.Validation;
@@ -53,12 +53,12 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
 
   /**
    * Generates code
-   * @param method String, like "alfanum-8"
+   * @param method String, like "alphanum-6"
    * @return String
    */
   static String generateCode(String method) {
     if (method == null) {
-      method = "alfanum-6";
+      method = "alphanum-8";
     }
     int codeLength = 8;
     String[] parts = method.split("-");
@@ -83,7 +83,11 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
         codeSource = SecretGenerator.DIGITS;
         break;
       }
-      default: {
+      case "alphanum": {
+        codeSource = SecretGenerator.ALPHANUM;
+        break;
+      }
+      default:{
         codeSource = SecretGenerator.ALPHANUM;
       }
     }
@@ -101,7 +105,7 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
     if (requiredActionContext.getUser().isEmailVerified()) {
       requiredActionContext.success();
       authSession.removeAuthNote(Constants.VERIFY_EMAIL_KEY);
-      authSession.removeAuthNote(Constants.VERIFY_EMAIL_CODE);
+      authSession.removeAuthNote("VERIFY_EMAIL_CODE");
       return;
     }
 
@@ -172,7 +176,8 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
 
     String code = generateCode(this.codeFormat);
 
-    authSession.setAuthNote(Constants.VERIFY_EMAIL_CODE, code);
+    authSession.setAuthNote("VERIFY_EMAIL_CODE", code);
+    logger.debug("set code " + code + " for " + user.getId());
 
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("code", code);
@@ -201,7 +206,7 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
   @Override
   public void processAction(RequiredActionContext requiredActionContext) {
 
-    String code = requiredActionContext.getAuthenticationSession().getAuthNote(Constants.VERIFY_EMAIL_CODE);
+    String code = requiredActionContext.getAuthenticationSession().getAuthNote("VERIFY_EMAIL_CODE");
     if (code == null) {
       requiredActionChallenge(requiredActionContext);
       return;
@@ -221,7 +226,7 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
 
     if (emailCode == null) {
       requiredActionContext.getAuthenticationSession().removeAuthNote(Constants.VERIFY_EMAIL_KEY);
-      requiredActionContext.getAuthenticationSession().removeAuthNote(Constants.VERIFY_EMAIL_CODE);
+      requiredActionContext.getAuthenticationSession().removeAuthNote("VERIFY_EMAIL_CODE");
       requiredActionContext.form().setInfo("newCodeSent");
       requiredActionChallenge(requiredActionContext);
       return;
