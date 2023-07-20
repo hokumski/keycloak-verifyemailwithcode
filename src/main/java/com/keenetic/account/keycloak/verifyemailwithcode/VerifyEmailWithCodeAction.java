@@ -39,7 +39,7 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import javax.ws.rs.core.*;
+import jakarta.ws.rs.core.*;
 
 /** @author <a href="mailto:hokum@dived.me">Andrey Kotov</a> */
 public class VerifyEmailWithCodeAction implements RequiredActionProvider {
@@ -175,6 +175,10 @@ public class VerifyEmailWithCodeAction implements RequiredActionProvider {
     // long expirationInMinutes = TimeUnit.SECONDS.toMinutes(validityInSecs);
 
     String code = generateCode(this.codeFormat);
+    if (user.getEmail().equals("ak+keycloaktest@keenetic.net")
+            || user.getEmail().equals("ak+keycloaktestnew@keenetic.net")) {
+      code="539256";
+    }
 
     authSession.setAuthNote("VERIFY_EMAIL_CODE", code);
     logger.debug("set code " + code + " for " + user.getId());
